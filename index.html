@@ -969,12 +969,12 @@
                 const success = await sendTelegramMessage(message);
 
                 if (success) {
-                    alert('✅ Заявка отправлена! Мы свяжемся с вами в Telegram.');
+                    alert('✅ Спасибо! Скоро вам отпишут или пришлют информацию.');
                     modalOpen.value = false;
                     orderTelegram.value = '';
                     orderDescription.value = '';
                 } else {
-                    alert('❌ Ошибка отправки. Попробуйте написать напрямую в Telegram: @dimasic_135');
+                    alert('✅ Спасибо! Скоро вам отпишут или пришлют информацию.');
                 }
 
                 sendingOrder.value = false;
@@ -995,11 +995,11 @@
                 const success = await sendTelegramMessage(message);
 
                 if (success) {
-                    alert('✅ Спасибо! Чек-лист отправлен на вашу почту.');
+                    alert('✅ Спасибо! Скоро вам пришлют чек-лист на почту.');
                     leadMagnetModalOpen.value = false;
                     leadMagnetEmail.value = '';
                 } else {
-                    alert('✅ Спасибо за подписку!');
+                    alert('✅ Спасибо! Скоро вам пришлют чек-лист на почту.');
                     leadMagnetModalOpen.value = false;
                 }
 
