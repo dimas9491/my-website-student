@@ -637,9 +637,10 @@
                 Собрали 15 критических ошибок, из-за которых валят на защите диплома. Забирай бесплатно и проверь себя перед выступлением.
             </p>
             <form @submit.prevent="submitLeadMagnet" class="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
-                <input type="email" placeholder="Твой Email" required class="flex-grow bg-white/10 border border-white/20 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-indigo-500 transition-all placeholder-gray-400">
-                <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg shadow-indigo-500/30 whitespace-nowrap">
-                    Получить <i class="fa-solid fa-arrow-right ml-2"></i>
+                <input v-model="leadMagnetEmail" type="email" placeholder="Твой Email" required class="flex-grow bg-white/10 border border-white/20 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-indigo-500 transition-all placeholder-gray-400">
+                <button type="submit" :disabled="sendingLeadMagnet" class="bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg shadow-indigo-500/30 whitespace-nowrap">
+                    <span v-if="!sendingLeadMagnet">Получить <i class="fa-solid fa-arrow-right ml-2"></i></span>
+                    <span v-else><i class="fa-solid fa-spinner fa-spin"></i></span>
                 </button>
             </form>
             <p class="text-xs text-gray-500 mt-4">Придет на почту мгновенно. Без спама.</p>
@@ -837,14 +838,15 @@
             <form @submit.prevent="submitOrder" class="space-y-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Твой Telegram (обязательно)</label>
-                    <input type="text" placeholder="@username" class="w-full bg-slate-900 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors">
+                    <input v-model="orderTelegram" type="text" placeholder="@username" required class="w-full bg-slate-900 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors">
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Кратко о задаче</label>
-                    <textarea placeholder="Нужен бот, который..." rows="3" class="w-full bg-slate-900 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"></textarea>
+                    <textarea v-model="orderDescription" placeholder="Нужен бот, который..." rows="3" required class="w-full bg-slate-900 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"></textarea>
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-all">
-                    Отправить заявку
+                <button type="submit" :disabled="sendingOrder" class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all">
+                    <span v-if="!sendingOrder">Отправить заявку</span>
+                    <span v-else class="flex items-center justify-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i> Отправка...</span>
                 </button>
             </form>
         </div>
@@ -867,10 +869,11 @@
             
             <form @submit.prevent="submitLeadMagnet" class="space-y-4">
                 <div>
-                    <input type="email" placeholder="Твой Email для получения PDF" required class="w-full bg-slate-900 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors">
+                    <input v-model="leadMagnetEmail" type="email" placeholder="Твой Email для получения PDF" required class="w-full bg-slate-900 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors">
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2">
-                    Получить бесплатно <i class="fa-solid fa-paper-plane"></i>
+                <button type="submit" :disabled="sendingLeadMagnet" class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2">
+                    <span v-if="!sendingLeadMagnet">Получить бесплатно <i class="fa-solid fa-paper-plane"></i></span>
+                    <span v-else><i class="fa-solid fa-spinner fa-spin"></i> Отправка...</span>
                 </button>
             </form>
         </div>
@@ -892,6 +895,18 @@
             const modalOpen = ref(false);
             const leadMagnetModalOpen = ref(false);
             const selectedService = ref('');
+            const orderTelegram = ref('');
+            const orderDescription = ref('');
+            const leadMagnetEmail = ref('');
+            const sendingOrder = ref(false);
+            const sendingLeadMagnet = ref(false);
+
+            // ⚠️ НАСТРОЙКИ: Замените на свои данные
+            // 1. Создайте бота через @BotFather в Telegram
+            // 2. Получите токен бота (например: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz)
+            // 3. Узнайте свой chat_id (напишите боту @userinfobot или @getidsbot)
+            const TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'; // Замените на токен вашего бота
+            const TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID_HERE'; // Замените на ваш chat_id (например: 123456789)
 
             const scrollToSection = (id) => {
                 const element = document.getElementById(id);
@@ -903,20 +918,95 @@
             const openOrderModal = (serviceTitle) => {
                 selectedService.value = serviceTitle;
                 modalOpen.value = true;
+                orderTelegram.value = '';
+                orderDescription.value = '';
             };
 
             const openLeadMagnetModal = () => {
                 leadMagnetModalOpen.value = true;
+                leadMagnetEmail.value = '';
             };
 
-            const submitOrder = () => {
-                alert('Заявка отправлена! Мы свяжемся с вами в Telegram.');
-                modalOpen.value = false;
+            const sendTelegramMessage = async (message) => {
+                if (TELEGRAM_BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE' || TELEGRAM_CHAT_ID === 'YOUR_CHAT_ID_HERE') {
+                    console.error('Telegram Bot не настроен! Укажите TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID');
+                    return false;
+                }
+
+                try {
+                    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            chat_id: TELEGRAM_CHAT_ID,
+                            text: message,
+                            parse_mode: 'HTML'
+                        })
+                    });
+
+                    const data = await response.json();
+                    return data.ok;
+                } catch (error) {
+                    console.error('Ошибка отправки в Telegram:', error);
+                    return false;
+                }
             };
 
-            const submitLeadMagnet = () => {
-                alert('Спасибо! Чек-лист отправлен на вашу почту.');
-                leadMagnetModalOpen.value = false;
+            const submitOrder = async () => {
+                if (!orderTelegram.value || !orderDescription.value) {
+                    alert('Пожалуйста, заполните все поля');
+                    return;
+                }
+
+                sendingOrder.value = true;
+
+                const message = `🔔 <b>Новая заявка на услугу</b>\n\n` +
+                    `📋 <b>Услуга:</b> ${selectedService.value}\n` +
+                    `👤 <b>Telegram:</b> ${orderTelegram.value}\n` +
+                    `📝 <b>Описание задачи:</b>\n${orderDescription.value}\n\n` +
+                    `⏰ <b>Время:</b> ${new Date().toLocaleString('ru-RU')}`;
+
+                const success = await sendTelegramMessage(message);
+
+                if (success) {
+                    alert('✅ Заявка отправлена! Мы свяжемся с вами в Telegram.');
+                    modalOpen.value = false;
+                    orderTelegram.value = '';
+                    orderDescription.value = '';
+                } else {
+                    alert('❌ Ошибка отправки. Попробуйте написать напрямую в Telegram: @dimasic_135');
+                }
+
+                sendingOrder.value = false;
+            };
+
+            const submitLeadMagnet = async () => {
+                if (!leadMagnetEmail.value) {
+                    alert('Пожалуйста, укажите email');
+                    return;
+                }
+
+                sendingLeadMagnet.value = true;
+
+                const message = `📧 <b>Новая подписка на чек-лист</b>\n\n` +
+                    `📮 <b>Email:</b> ${leadMagnetEmail.value}\n` +
+                    `⏰ <b>Время:</b> ${new Date().toLocaleString('ru-RU')}`;
+
+                const success = await sendTelegramMessage(message);
+
+                if (success) {
+                    alert('✅ Спасибо! Чек-лист отправлен на вашу почту.');
+                    leadMagnetModalOpen.value = false;
+                    leadMagnetEmail.value = '';
+                } else {
+                    alert('✅ Спасибо за подписку!');
+                    leadMagnetModalOpen.value = false;
+                }
+
+                sendingLeadMagnet.value = false;
             };
 
             return {
@@ -925,6 +1015,11 @@
                 modalOpen,
                 leadMagnetModalOpen,
                 selectedService,
+                orderTelegram,
+                orderDescription,
+                leadMagnetEmail,
+                sendingOrder,
+                sendingLeadMagnet,
                 openOrderModal,
                 openLeadMagnetModal,
                 submitOrder,
